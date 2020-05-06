@@ -79,19 +79,19 @@ heart_nomiss = heart %>%
       exang == 0 ~ "no"
             ),
     cp = case_when(
-      cp == 3 ~ "typical angina",
-      cp == 1 ~ "atypical angina",
-      cp == 2 ~ "non-anginal",
-      cp == 0 ~ "asymptomatic angina"
+      cp == 3 ~ "typical_angina",
+      cp == 1 ~ "atypical_angina",
+      cp == 2 ~ "non_anginal",
+      cp == 0 ~ "asymptomatic_angina"
           ),
     restecg = case_when(
-      restecg == 2 ~ "wave abnormality",
+      restecg == 2 ~ "wave_abnormality",
       restecg == 1 ~ "normal",
       restecg == 0 ~ "hypertrophy"
               ),
     target = case_when(
       target == 1 ~ "asymptomatic",
-      target == 0 ~ "heart-disease"
+      target == 0 ~ "heart_disease"
               ),
     slope = case_when(
       slope == 2 ~ "upsloping",
@@ -99,9 +99,9 @@ heart_nomiss = heart %>%
       slope == 0 ~ "downsloping"
     ),
     thal = case_when(
-      thal == 3 ~ "reversable defect",
+      thal == 3 ~ "reversable_defect",
       thal == 2 ~ "normal",
-      thal == 1 ~ "fixed defect"
+      thal == 1 ~ "fixed_defect"
     ),
     sex = as.factor(sex),
     fbs = as.factor(fbs),
@@ -139,8 +139,6 @@ ctrl <- trainControl(method = "repeatedcv",repeats = 5,summaryFunction = twoClas
 
 nbGrid = expand.grid(usekernel = c(FALSE,TRUE),fL = 1,adjust = seq(.2, 3, by = .2))
 
-model.nb = train(x = heart_nomiss[rowTrain,1:13],y = heart_nomiss$target[rowTrain],method = "nb",tuneGrid = nbGrid,metric = "ROC",trControl = ctrl)
 
-plot(model.nb)
 ```
 
