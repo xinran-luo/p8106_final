@@ -1,6 +1,6 @@
 ---
 title: "p8106_final"
-author: "xinran"
+author: "Stephanie Zhen, Xinran Luo, Ran An"
 date: "5/4/2020"
 output: html_document
 ---
@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readr)
 library(Amelia)
+library(DataExplorer)
 ```
 
 age: age in years
@@ -94,5 +95,14 @@ heart_nomiss = heart %>%
     thal = as.factor(thal)
   )
 
+```
+
+
+```{r}
+plot_density(heart_nomiss)
+```
+
+```{r}
+plot_bar(heart_nomiss)
 ```
 
