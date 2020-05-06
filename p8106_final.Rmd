@@ -17,6 +17,7 @@ library(Amelia)
 library(DataExplorer)
 library(caret)
 library(pROC)
+library(klaR)
 library(AppliedPredictiveModeling)
 ```
 
@@ -134,6 +135,7 @@ rowTrain = createDataPartition(y = heart_nomiss$target,p = 2/3,list = FALSE)
 ###Naive Bayes (NB)
 ```{r}
 set.seed(1)
+ctrl <- trainControl(method = "repeatedcv",repeats = 5,summaryFunction = twoClassSummary,classProbs = TRUE)
 
 nbGrid = expand.grid(usekernel = c(FALSE,TRUE),fL = 1,adjust = seq(.2, 3, by = .2))
 
