@@ -17,8 +17,10 @@ library(Amelia)
 library(DataExplorer)
 library(caret)
 library(pROC)
+library(ROCR)
 library(klaR)
 library(AppliedPredictiveModeling)
+library(naivebayes)
 ```
 
 age: age in years
@@ -123,22 +125,27 @@ plot_density(heart_nomiss)
 plot_bar(heart_nomiss)
 ```
 
+
 ###Partition the data for training
 
 ```{r}
 set.seed(1)
-rowTrain = createDataPartition(y = heart_nomiss$target,p = 2/3,list = FALSE)
+train.indices<-createDataPartition(y=heart_nomiss$target,p=0.7,list=FALSE)
 
+training<-heart_nomiss[train.indices,]
+testing<-heart_nomiss[-train.indices,]
 ```
 
 
 ###Naive Bayes (NB)
 ```{r}
 set.seed(1)
-ctrl <- trainControl(method = "repeatedcv",repeats = 5,summaryFunction = twoClassSummary,classProbs = TRUE)
 
-nbGrid = expand.grid(usekernel = c(FALSE,TRUE),fL = 1,adjust = seq(.2, 3, by = .2))
-
-
+heart.nb = naive_bayes(as.factor(target) ~ ., data=training)
+nb.pred <- predict(heart.nb, newdata = testing, type = "prob")[,2]
+roc.nb <- roc(testing$target, nb.pred)
+#ROC curve
+plot(roc.nb)
+roc.nb$auc
 ```
 
