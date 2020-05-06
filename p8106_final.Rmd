@@ -10,13 +10,89 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r}
+```{r message=FALSE}
 library(tidyverse)
 library(readr)
+library(Amelia)
 ```
+
+age: age in years
+sex: (1 = male; 0 = female)
+cp: chest pain type (typical angina, atypical angina, non-angina, or asymptomatic angina)
+trestbps: resting blood pressure (in mm Hg on admission to the hospital)
+chol: serum cholestoral in mg/dl
+fbs: Fasting blood sugar (< 120 mg/dl or > 120 mg/dl) (1 = true; 0 = false)
+restecg: resting electrocardiographic results (normal, ST-T wave abnormality, or left ventricular hypertrophy)
+thalach: Max. heart rate achieved during thalium stress test
+exang: Exercise induced angina (1 = yes; 0 = no)
+oldpeak: ST depression induced by exercise relative to rest
+slope: Slope of peak exercise ST segment (0 = upsloping, 1 = flat, or 2 = downsloping)
+ca: number of major vessels (0-3) colored by flourosopy 4 = NA
+thal: Thalium stress test result 3 = normal; 6 = fixed defect; 7 = reversable defect 0 = NA
+target: Heart disease status 1 or 0 (0 = heart disease 1 = asymptomatic)
+
+### Load the data
+
+```{r message=FALSE}
+heart = read_csv("./data/heart.csv")
+head(heart)
+
+summary(heart)
+
+missmap(heart)
+```
+
+###Data Cleaning:
 
 ```{r}
-heart = read_csv("./data/heart.csv")
-```
+heart_nomiss = heart %>%
+  filter(thal != 0 & ca != 4) %>% 
+  mutate(
+    sex = case_when(
+     sex == 1 ~ "male",
+    sex == 0 ~ "female"
+           ),
+    fbs = case_when(
+      fbs == 1 ~ "true",
+      fbs == 0 ~ "false"
+            ),
+    exang = case_when(
+      exang == 1 ~ "yes",
+      exang == 0 ~ "no"
+            ),
+    cp = case_when(
+      cp == 3 ~ "typical angina",
+      cp == 1 ~ "atypical angina",
+      cp == 2 ~ "non-anginal",
+      cp == 0 ~ "asymptomatic angina"
+          ),
+    restecg = case_when(
+      restecg == 2 ~ "wave abnormality",
+      restecg == 1 ~ "normal",
+      restecg == 0 ~ "hypertrophy"
+              ),
+    target = case_when(
+      target == 1 ~ "asymptomatic",
+      target == 0 ~ "heart-disease"
+              ),
+    slope = case_when(
+      slope == 2 ~ "upsloping",
+      slope == 1 ~ "flat",
+      slope == 0 ~ "downsloping"
+    ),
+    thal = case_when(
+      thal == 3 ~ "reversable defect",
+      thal == 2 ~ "normal",
+      thal == 1 ~ "fixed defect"
+    ),
+    sex = as.factor(sex),
+    fbs = as.factor(fbs),
+    exang = as.factor(exang),
+    cp = as.factor(cp),
+    slope = as.factor(slope),
+    ca = as.factor(ca),
+    thal = as.factor(thal)
+  )
 
+```
 
