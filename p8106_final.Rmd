@@ -175,7 +175,7 @@ roc.nb$auc
 
 ## rpart
 ```{r}
-control1 = trainControl(method = "repeatedcv",
+control = trainControl(method = "repeatedcv",
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE)
 
@@ -184,15 +184,124 @@ rpart_fit = train(target ~ .,
                   data = training,
                   method = "rpart",
                   tuneGrid = data.frame(cp = exp(seq(-9, -5, len = 30))),
-                  trControl = control1,
+                  trControl = control,
                   metric = "ROC")
 
 ggplot(rpart_fit, highlight = TRUE)
 rpart.plot(rpart_fit$finalModel)
+
+##Predict using train data
+rpart_train = predict(rpart_fit,
+                      newdata = training,
+                      type = "prob")[,2]
+
+roc_rpart_train = roc(training$target, rpart_train)
+plot(roc_rpart_train, legacy.axes = TRUE, print.auc = TRUE)
+plot(roc_rpart_train, add = TRUE, col = 3)
+
+
+##Predict using test data
+rpart_test = predict(rpart_fit,
+                      newdata = testing,
+                      type = "prob")[,2]
+
+roc_rpart_test = roc(testing$target, rpart_test)
+plot(roc_rpart_test, legacy.axes = TRUE, print.auc = TRUE)
+plot(roc_rpart_test, add = TRUE, col = 3)
+
 ```
 
 ### Random Forest
 ```{r}
+rf_grid = expand.grid(mtry = 3:7,
+                      splitrule = "gini",
+                      min.node.size = 3:7)
+set.seed(1)
+rf_fit = train(target ~., 
+               data = training,
+               method = "ranger",
+               tuneGrid = rf_grid,
+               metric = "ROC",
+               importance = "permutation",
+               trControl = control)
+
+ggplot(rf_fit, highlight = TRUE)
+
+##Predicting using training data
+rf_train = predict(rf_fit,
+                  newdata = training, 
+                  type = "prob")[,2]
+
+roc_rf_train = roc(training$target, rf_train)
+plot(roc_rf_train, legacy.axes = TRUE, print.auc = TRUE)
+plot(roc_rf_train, add = TRUE, col = 3)
+
+##Predict using test data
+rf_test = predict(rpart_fit,
+                      newdata = testing,
+                      type = "prob")[,2]
+
+roc_rf_test = roc(testing$target, rf_test)
+plot(roc_rf_test, legacy.axes = TRUE, print.auc = TRUE)
+plot(roc_rf_test, add = TRUE, col = 3)
 
 ```
 
+
+### Variable importance using random forest
+```{r}
+rf_imp = varImp(rf_fit)
+plot(rf_imp)
+```
+
+
+
+### support vector classifier (linear kernel)
+```{r}
+control1 <- trainControl(method = "cv")
+set.seed(1)
+# fit model
+svml.fit <- train(target ~ ., 
+                  data = training, 
+                  method = "svmLinear2",
+                  preProcess = c("center", "scale"),
+                  tuneGrid = data.frame(cost = exp(seq(-5,-1,len=50))),
+                  trControl = control1)
+# model output
+svml.fit$finalModel
+# best tunning parameter
+svml.fit$bestTune
+# Accuracy plot
+ggplot(svml.fit, highlight = TRUE)
+# training error rate
+pred_train = predict(svml.fit)
+mean(training$target != pred_train)
+# test error rate
+pred_test = predict(svml.fit, newdata = testing, type = "raw")
+mean(testing$target != pred_test)
+```
+
+### support vector machine(radial kernel)
+```{r}
+svmr.grid <- expand.grid(C = exp(seq(-5,2,len=20)),
+                         sigma = exp(seq(-8,-1,len=10)))
+set.seed(1) 
+# fit model
+svmr.fit <- train(target ~ ., training,
+                  method = "svmRadial",
+                  preProcess = c("center", "scale"),
+                  tuneGrid = svmr.grid,
+                  trControl = control1)
+# model output
+svmr.fit$finalModel
+# best tunning parameter
+svmr.fit$bestTune
+# Accuracy plot
+ggplot(svmr.fit, highlight = TRUE)
+# training error rate
+pred_train2 = predict(svmr.fit)
+mean(training$target != pred_train2)
+# test error rate
+pred_test2 = predict(svmr.fit, newdata = testing, type = "raw")
+mean(testing$target != pred_test2)
+```
