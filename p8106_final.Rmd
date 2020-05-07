@@ -196,3 +196,52 @@ rpart.plot(rpart_fit$finalModel)
 
 ```
 
+### support vector classifier (linear kernel)
+```{r}
+control1 <- trainControl(method = "cv")
+set.seed(1)
+# fit model
+svml.fit <- train(target ~ ., 
+                  data = training, 
+                  method = "svmLinear2",
+                  preProcess = c("center", "scale"),
+                  tuneGrid = data.frame(cost = exp(seq(-5,-1,len=50))),
+                  trControl = control1)
+# model output
+svml.fit$finalModel
+# best tunning parameter
+svml.fit$bestTune
+# Accuracy plot
+ggplot(svml.fit, highlight = TRUE)
+# training error rate
+pred_train = predict(svml.fit)
+mean(training$target != pred_train)
+# test error rate
+pred_test = predict(svml.fit, newdata = testing, type = "raw")
+mean(testing$target != pred_test)
+```
+
+### support vector machine(radial kernel)
+```{r}
+svmr.grid <- expand.grid(C = exp(seq(-5,2,len=20)),
+                         sigma = exp(seq(-8,-1,len=10)))
+set.seed(1) 
+# fit model
+svmr.fit <- train(target ~ ., training,
+                  method = "svmRadial",
+                  preProcess = c("center", "scale"),
+                  tuneGrid = svmr.grid,
+                  trControl = control1)
+# model output
+svmr.fit$finalModel
+# best tunning parameter
+svmr.fit$bestTune
+# Accuracy plot
+ggplot(svmr.fit, highlight = TRUE)
+# training error rate
+pred_train2 = predict(svmr.fit)
+mean(training$target != pred_train2)
+# test error rate
+pred_test2 = predict(svmr.fit, newdata = testing, type = "raw")
+mean(testing$target != pred_test2)
+```
