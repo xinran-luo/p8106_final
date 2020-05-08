@@ -55,7 +55,7 @@ target: Heart disease status 1 or 0 (0 = heart disease 1 = asymptomatic)
 
 ### Load the data
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 heart = read_csv("./data/heart.csv")
 head(heart)
 
@@ -153,45 +153,45 @@ ggplot(data = heart_nomiss, aes(x = sex,
 ###Partition the data for training
 ```{r}
 set.seed(1)
-train.indices <- createDataPartition(y = heart_nomiss$target, p = 0.7, list = FALSE)
+train.indices = createDataPartition(y = heart_nomiss$target, p = 0.7, list = FALSE)
 
-training <- heart_nomiss[train.indices,]
-testing <- heart_nomiss[-train.indices,]
+training = heart_nomiss[train.indices,]
+testing = heart_nomiss[-train.indices,]
+
+
+control = trainControl(method = "cv",
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE)
 ```
 
 
 ###Naive Bayes (NB)
-```{r}
+```{r warning=FALSE}
 set.seed(1)
 
-heart.nb = naive_bayes(as.factor(target) ~ ., data = training)
-nb.pred <- predict(heart.nb, newdata = testing, type = "prob")[,2]
-roc.nb <- roc(testing$target, nb.pred)
-#ROC curve
-plot(roc.nb)
-roc.nb$auc
+nbGrid = expand.grid(usekernel = c(FALSE,TRUE),fL = 1,adjust = seq(.2, 1, by = .2))
+nb.fit = train(x = heart_nomiss[train.indices,1:13],y = heart_nomiss$target[train.indices],method = "nb",tuneGrid = nbGrid,metric = "ROC",trControl = control)
+plot(nb.fit)
+
 ```
 
 
 ## rpart
 ```{r}
-control = trainControl(method = "repeatedcv",
-                        summaryFunction = twoClassSummary,
-                        classProbs = TRUE)
 
 set.seed(1)
-rpart_fit = train(target ~ .,
+rpart.fit = train(target ~ .,
                   data = training,
                   method = "rpart",
                   tuneGrid = data.frame(cp = exp(seq(-9, -5, len = 30))),
                   trControl = control,
                   metric = "ROC")
 
-ggplot(rpart_fit, highlight = TRUE)
-rpart.plot(rpart_fit$finalModel)
+ggplot(rpart.fit, highlight = TRUE)
+rpart.plot(rpart.fit$finalModel)
 
 ##Predict using train data
-rpart_train = predict(rpart_fit,
+rpart_train = predict(rpart.fit,
                       newdata = training,
                       type = "prob")[,2]
 
@@ -201,7 +201,7 @@ plot(roc_rpart_train, add = TRUE, col = 3)
 
 
 ##Predict using test data
-rpart_test = predict(rpart_fit,
+rpart_test = predict(rpart.fit,
                       newdata = testing,
                       type = "prob")[,2]
 
@@ -217,7 +217,7 @@ rf_grid = expand.grid(mtry = 3:7,
                       splitrule = "gini",
                       min.node.size = 3:7)
 set.seed(1)
-rf_fit = train(target ~., 
+rf.fit = train(target ~., 
                data = training,
                method = "ranger",
                tuneGrid = rf_grid,
@@ -225,10 +225,10 @@ rf_fit = train(target ~.,
                importance = "permutation",
                trControl = control)
 
-ggplot(rf_fit, highlight = TRUE)
+ggplot(rf.fit, highlight = TRUE)
 
 ##Predicting using training data
-rf_train = predict(rf_fit,
+rf_train = predict(rf.fit,
                   newdata = training, 
                   type = "prob")[,2]
 
@@ -236,72 +236,64 @@ roc_rf_train = roc(training$target, rf_train)
 plot(roc_rf_train, legacy.axes = TRUE, print.auc = TRUE)
 plot(roc_rf_train, add = TRUE, col = 3)
 
-##Predict using test data
-rf_test = predict(rpart_fit,
-                      newdata = testing,
-                      type = "prob")[,2]
-
-roc_rf_test = roc(testing$target, rf_test)
-plot(roc_rf_test, legacy.axes = TRUE, print.auc = TRUE)
-plot(roc_rf_test, add = TRUE, col = 3)
-
 ```
 
 
 ### Variable importance using random forest
 ```{r}
-rf_imp = varImp(rf_fit)
+rf_imp = varImp(rf.fit)
 plot(rf_imp)
 ```
 
 
 
 ### support vector classifier (linear kernel)
-```{r}
-control1 <- trainControl(method = "cv")
+```{r warning=FALSE, message=FALSE}
 set.seed(1)
 # fit model
-svml.fit <- train(target ~ ., 
+svml.fit = train(target ~ ., 
                   data = training, 
                   method = "svmLinear2",
                   preProcess = c("center", "scale"),
                   tuneGrid = data.frame(cost = exp(seq(-5,-1,len=50))),
-                  trControl = control1)
+                  trControl = control)
 # model output
 svml.fit$finalModel
 # best tunning parameter
 svml.fit$bestTune
 # Accuracy plot
 ggplot(svml.fit, highlight = TRUE)
-# training error rate
-pred_train = predict(svml.fit)
-mean(training$target != pred_train)
-# test error rate
-pred_test = predict(svml.fit, newdata = testing, type = "raw")
-mean(testing$target != pred_test)
+
 ```
 
-### support vector machine(radial kernel)
-```{r}
-svmr.grid <- expand.grid(C = exp(seq(-5,2,len=20)),
-                         sigma = exp(seq(-8,-1,len=10)))
-set.seed(1) 
-# fit model
-svmr.fit <- train(target ~ ., training,
-                  method = "svmRadial",
-                  preProcess = c("center", "scale"),
-                  tuneGrid = svmr.grid,
-                  trControl = control1)
-# model output
-svmr.fit$finalModel
-# best tunning parameter
-svmr.fit$bestTune
-# Accuracy plot
-ggplot(svmr.fit, highlight = TRUE)
-# training error rate
-pred_train2 = predict(svmr.fit)
-mean(training$target != pred_train2)
-# test error rate
-pred_test2 = predict(svmr.fit, newdata = testing, type = "raw")
-mean(testing$target != pred_test2)
+### Logistic regression
+```{r warning=FALSE, message=FALSE}
+set.seed(1)
+glm.fit = train(target ~., data=training, method='glm', trControl = control)
+
 ```
+
+###Model Selection
+
+```{r}
+set.seed(1)
+resamp = resamples(list( nb =nb.fit,
+                          rpart = rpart.fit,
+                          rf = rf.fit,
+                          svml = svml.fit,
+                          glm = glm.fit))
+summary(resamp)
+```
+
+Support vector classifier (linear kernel) performs best.
+
+### Performance evaluation
+
+```{r warning=FALSE, message=FALSE}
+
+svml.pred <- predict(svml.fit, newdata = testing, type = "prob")[,1]
+roc.svml = roc(testing$target, svml.pred)
+plot(roc.svml,print.auc = TRUE)
+
+```
+
