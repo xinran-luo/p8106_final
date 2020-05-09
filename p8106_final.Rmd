@@ -23,6 +23,7 @@ library(klaR)
 library(AppliedPredictiveModeling)
 library(naivebayes)
 library(rpart.plot)
+library(e1071)
 ```
 
 age: age in years
@@ -114,7 +115,9 @@ heart_nomiss = heart %>%
     cp = as.factor(cp),
     slope = as.factor(slope),
     ca = as.factor(ca),
-    thal = as.factor(thal)
+    thal = as.factor(thal),
+    restecg = as.factor(restecg),
+    target = as.factor(target)
   )
 ```
 
@@ -259,7 +262,7 @@ svml.fit = train(target ~ .,
                   tuneGrid = data.frame(cost = exp(seq(-5,-1,len=50))),
                   trControl = control)
 # model output
-svml.fit$finalModel
+svml.final = svml.fit$finalModel
 # best tunning parameter
 svml.fit$bestTune
 # Accuracy plot
@@ -296,6 +299,13 @@ svml.pred <- predict(svml.fit, newdata = testing, type = "prob")[,1]
 roc.svml = roc(testing$target, svml.pred)
 plot(roc.svml,print.auc = TRUE)
 
+
+
+pred.linear <- predict(svml.fit, newdata = testing)
+confusionMatrix(data = pred.linear,reference = testing$target)
+
 ```
+
+
 
 
