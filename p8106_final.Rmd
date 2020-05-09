@@ -2,7 +2,9 @@
 title: "P8106 Data Science II Final Project"
 author: "Stephanie Zhen, Xinran Luo, Ran An"
 date: "5/4/2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -113,7 +115,8 @@ heart_nomiss = heart %>%
     cp = as.factor(cp),
     slope = as.factor(slope),
     ca = as.factor(ca),
-    thal = as.factor(thal)
+    thal = as.factor(thal),
+    target = as.factor(target)
   )
 ```
 
@@ -252,11 +255,13 @@ plot(rf_imp)
 set.seed(1)
 # fit model
 svml.fit = train(target ~ ., 
-                  data = training, 
-                  method = "svmLinear2",
-                  preProcess = c("center", "scale"),
-                  tuneGrid = data.frame(cost = exp(seq(-5,-1,len=50))),
-                  trControl = control)
+                 data = training, 
+                 method = "svmLinear2",
+                 preProcess = c("center", "scale"),
+                 tuneGrid = data.frame(cost = exp(seq(-5,-1,len=50))),
+                 metric = "ROC",
+                 trControl = control)
+
 # model output
 svml.fit$finalModel
 # best tunning parameter
