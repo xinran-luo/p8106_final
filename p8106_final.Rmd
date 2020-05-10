@@ -24,6 +24,7 @@ library(AppliedPredictiveModeling)
 library(naivebayes)
 library(rpart.plot)
 library(e1071)
+
 ```
 
 age: age in years
@@ -57,7 +58,7 @@ target: Heart disease status 1 or 0 (0 = heart disease 1 = asymptomatic)
 ### Load the data
 
 ```{r message=FALSE, warning=FALSE}
-heart = read_csv("./data/heart.csv")
+heart = read.csv("./data/heart.csv")
 head(heart)
 
 summary(heart)
@@ -270,6 +271,17 @@ ggplot(svml.fit, highlight = TRUE)
 
 ```
 
+```{r}
+
+set.seed(1)
+svmr.grid <- expand.grid(C = exp(seq(-1,4,len=10)),sigma = exp(seq(-6,-2,len=10)))
+svmr.fit <- train(target~., data = training, method = "svmRadial",preProcess = c("center", "scale"),
+                  tuneGrid = svmr.grid,
+                  trControl = control)
+ggplot(svmr.fit, highlight = TRUE)
+```
+
+
 ### Logistic regression
 ```{r warning=FALSE, message=FALSE}
 set.seed(1)
@@ -285,6 +297,7 @@ resamp = resamples(list(  nb =nb.fit,
                           rpart = rpart.fit,
                           rf = rf.fit,
                           svml = svml.fit,
+                          svmr = svmr.fit,
                           glm = glm.fit))
 summary(resamp)
 bwplot(resamp)
@@ -305,6 +318,12 @@ plot(roc.svml,print.auc = TRUE)
 pred.linear <- predict(svml.fit, newdata = testing)
 confusionMatrix(data = pred.linear,reference = testing$target)
 
+```
+
+```{r}
+varImp(svmr.fit)
+svmr.imp = varImp(svmr.fit)
+plot(svmr.imp)
 ```
 
 
